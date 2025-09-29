@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100구절 주제별 성구 참고 자료 (모바일 최적화)</title>
+    <!-- Tailwind CSS CDN 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inter 폰트 설정 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        /* 선택된 버튼 스타일 */
+        .theme-button.active {
+            background-color: #10b981; /* Primary Green - Emerald */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -2px rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- 제목 및 설명 -->
+        <header class="text-center mb-8">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">100구절 성경 구절 참고</h1>
+            <p class="text-sm sm:text-md text-gray-500">원하는 주제를 선택하여 관련 구절들을 살펴보세요.</p>
+        </header>
+
+        <!-- 주제 선택 버튼 그룹 (flex-wrap 적용) -->
+        <div id="theme-selectors" class="flex flex-wrap justify-center gap-2 p-4 bg-white rounded-xl shadow-lg mb-8">
+            <!-- 주제 버튼들이 여기에 렌더링됩니다 -->
+        </div>
+
+        <!-- 성경 구절 목록 -->
+        <div id="verse-list" class="space-y-4">
+            <!-- 필터링된 구절들이 여기에 렌더링됩니다 -->
+        </div>
+
+        <!-- 구절이 없을 때 표시되는 메시지 (초기에는 숨김) -->
+        <div id="no-verses-message" class="hidden text-center p-8 bg-white rounded-xl shadow-lg text-gray-500">
+            <p class="text-lg font-medium">선택하신 주제에 해당하는 구절이 없습니다.</p>
+        </div>
+    </div>
+
+    <script>
+        // 100구절 성경 구절 데이터 (소주제 및 구절 포함)
+        const allScriptures = [
+            {
+                title: "원래 인간과 근본 문제",
+                verses: [
+                    { id: "verse_1", ref: "창1:27", text: "하나님이 자기 형상 곧 하나님의 형상대로 사람을 창조하시되 남자와 여자를 창조 하시고" },
+                    { id: "verse_2", ref: "창1:28", text: "하나님이 그들에게 복을 주시며 하나님이 그들에게 이르시되 생육하고 번성하여 땅에 충만하라, 땅을 정복하라, 바다의 물고기와 하늘의 새와 땅에 움직이는 모든 생물을 다스리라 하시니라" },
+                    { id: "verse_3", ref: "창2:7", text: "여호와 하나님이 땅의 흙으로 사람을 지으시고 생기를 그 코에 불어넣으시니 사람이 생령이 되니라" },
+                    { id: "verse_4", ref: "요8:44", text: "너희는 너희 아비 마귀에게서 났으니 너희 아비의 욕심대로 너희도 행하고자 하느니라 그는 처음부터 살인한 자요 진리가 그 속에 없으므로 진리에 서지 못하고 거짓을 말할 때마다 제 것으로 말하나니 이는 그가 거짓말쟁이요 거짓의 아비가 되었음이라" },
+                    { id: "verse_5", ref: "롬3:23", text: "모든 사람이 죄를 범하였으매 하나님의 영광에 이르지 못하더니" },
+                    { id: "verse_6", ref: "창3:5-6", text: "너희가 그것을 먹는 날에는 너희 눈이 밝아져 하나님과 같이 되어 선악을 알 줄 하나님이 아심이니라 여자가 그 나무를 본즉 먹음직도 하고 보암직도 하고 지혜롭게 할 만큼 탐스럽기도 한 나무인지라 여자가 그 열매를 따먹고 자기와 함께 있는 남편에게도 주매 그도 먹은지라" }
+                ]
+            },
+            {
+                title: "인간의 노력과 하나님의 해결책",
+                verses: [
+                    { id: "verse_7", ref: "골2:8", text: "누가 철학과 헛된 속임수로 너희를 사로잡을까 주의하라 이것은 사람의 전통과 세상의 초등학문을 따름이요 그리스도를 따름이 아니니라" },
+                    { id: "verse_8", ref: "사64:6", text: "무릇 우리는 다 부정한 자 같아서 우리의 의는 다 더러운 옷 같으며 우리는 다 잎사귀 같이 시들므로 우리의 죄악이 바람같이 우리를 몰아가나이다" },
+                    { id: "verse_9", ref: "행4:12", text: "다른 이로써는 구원을 받을 수 없나니 천하 사람 중에 구원을 받을 만한 다른 이름을 우리에게 주신 일이 없음이라 하였더라" },
+                    { id: "verse_10", ref: "롬5:8", text: "우리가 아직 죄인 되었을 때에 그리스도께서 우리를 위하여 죽으심으로 하나님께서 우리에 대한 자기의 사랑을 확증하셨느니라" },
+                    { id: "verse_11", ref: "창3:15", text: "내가 너로 여자와 원수가 되게 하고 네 후손도 여자의 후손과 원수가 되게 하리니 여자의 후손은 네 머리를 상하게 할 것이니 너는 그의 발꿈치를 상하게 할 것이니라 하시고" },
+                    { id: "verse_12", ref: "사7:14", text: "그러므로 주께서 친히 징조를 너희에게 주실 것이라 보라 처녀가 잉태하여 아들을 낳을 것이요 그의 이름을 임마누엘이라 하리라" },
+                    { id: "verse_13", ref: "마16:16", text: "시몬 베드로가 대답하여 이르되 주는 그리스도시요 살아 계신 하나님의 아들이시니이다" },
+                    { id: "verse_14", ref: "사53:5", text: "그가 찔림은 우리의 허물 때문이요 그가 상함은 우리의 죄악 때문이라 그가 징계를 받으므로 우리는 평화를 누리고 그가 채찍에 맞으므로 우리는 나음을 받았도다" },
+                    { id: "verse_15", ref: "요1:14", text: "말씀이 육신이 되어 우리 가운데 거하시매 우리가 그의 영광을 보니 아버지의 독생자의 영광이요 은혜와 진리가 충만하더라" },
+                    { id: "verse_16", ref: "고전15:3-4", text: "내가 받은 것을 먼저 너희에게 전하였노니 이는 성경대로 그리스도께서 우리 죄를 위하여 죽으시고 장사 지낸 바 되셨다가 성경대로 사흘 만에 다시 살아나사" }
+                ]
+            },
+            {
+                title: "예수 그리스도",
+                verses: [
+                    { id: "verse_17", ref: "요일3:8", text: "죄를 짓는 자는 마귀에게 속하나니 마귀는 처음부터 범죄함이라 하나님의 아들이 나타나신 것은 마귀의 일을 멸하려 하심이라" },
+                    { id: "verse_18", ref: "요14:6", text: "예수께서 이르시되 내가 곧 길이요 진리요 생명이니 나로 말미암지 않고는 아버지께로 올 자가 없느니라" },
+                    { id: "verse_19", ref: "막10:45", text: "인자가 온 것은 섬김을 받으려 함이 아니라 도리어 섬기려 하고 자기 목숨을 많은 사람의 대속물로 주려 함이니라" },
+                    { id: "verse_20", ref: "벧전3:18", text: "그리스도께서도 단번에 죄를 위하여 죽으사 의인으로서 불의한 자를 대신하셨으니 이는 우리를 하나님 앞으로 인도하려 하심이라 육체로는 죽임을 당하시고 영으로는 살리심을 받으셨으니" },
+                    { id: "verse_21", ref: "마1:21", text: "아들을 낳으리니 이름을 예수라 하라 이는 그가 자기 백성을 그들의 죄에서 구원할 자이심이라 하니라" },
+                    { id: "verse_22", ref: "빌2:9-11", text: "이러므로 하나님이 그를 지극히 높여 모든 이름 위에 뛰어난 이름을 주사 하늘에 있는 자들과 땅에 있는 자들과 땅 아래에 있는 자들로 모든 무릎을 예수의 이름에 꿇게 하시고 모든 입으로 예수 그리스도를 주라 시인하여 하나님 아버지께 영광을 돌리게 하셨느니라" },
+                    { id: "verse_23", ref: "요1:12", text: "영접하는 자 곧 그 이름을 믿는 자들에게는 하나님의 자녀가 되는 권세를 주셨으니" },
+                    { id: "verse_24", ref: "롬10:9-10", text: "네가 만일 네 입으로 예수를 주로 시인하며 또 하나님께서 그를 죽은 자 가운데서 살리신 것을 네 마음에 믿으면 구원을 받으리라 사람이 마음으로 믿어 의에 이르고 입으로 시인하여 구원에 이르느니라" },
+                    { id: "verse_25", ref: "계3:20", text: "볼지어다 내가 문 밖에 서서 두드리노니 누구든지 내 음성을 듣고 문을 열면 내가 그에게로 들어가 그와 더불어 먹고 그는 나와 더불어 먹으리라" }
+                ]
+            },
+            {
+                title: "구원받은 자의 축복과 확신",
+                verses: [
+                    { id: "verse_26", ref: "고전3:16", text: "너희는 너희가 하나님의 성전인 것과 하나님의 성령이 너희 안에 계시는 것을 알지 못하느냐" },
+                    { id: "verse_27", ref: "요14:16-17", text: "내가 아버지께 구하겠으니 그가 또 다른 보혜사를 너희에게 주사 영원토록 너희와 함께 있게 하리니 그는 진리의 영이라 세상은 능히 그를 받지 못하나니 이는 그를 보지도 못하고 알지도 못함이라 그러나 너희는 그를 아나니 그는 너희와 함께 거하심이요 또 너희 속에 계시겠음이라" },
+                    { id: "verse_28", ref: "행1:8", text: "오직 성령이 너희에게 임하시면 너희가 권능을 받고 예루살렘과 온 유대와 사마리아와 땅 끝까지 이르러 내 증인이 되리라 하시니라" },
+                    { id: "verse_29", ref: "벧전2:9", text: "그러나 너희는 택하신 족속이요 왕 같은 제사장들이요 거룩한 나라요 그의 소유가 된 백성이니 이는 너희를 어두운 데서 불러 내어 그의 기이한 빛에 들어 가게 하신 이의 아름다운 덕을 선포하게 하려 함이라" },
+                    { id: "verse_30", ref: "사41:10", text: "두려워하지 말라 내가 너와 함께 함이라 놀라지 말라 나는 네 하나님이 됨이라 내가 너를 굳세게 하리라 참으로 너를 도와 주리라 참으로 나의 의로운 오른손으로 너를 붙들리라" },
+                    { id: "verse_31", ref: "사43:1", text: "야곱아 너를 창조하신 여호와께서 지금 말씀하시느니라 이스라엘아 너를 지으신 이가 말씀하시느니라 너는 두려워하지 말라 내가 너를 구속하였고 내가 너를 지명하여 불렀나니 너는 내 것이라" },
+                    { id: "verse_32", ref: "눅10:19", text: "내가 너희에게 뱀과 전갈을 밟으며 원수의 모든 능력을 제어할 권능을 주었으니 너희를 해칠 자가 결코 없으리라" },
+                    { id: "verse_33", ref: "히1:14", text: "모든 천사들은 섬기는 영으로서 구원 받을 상속자들을 위하여 섬기라고 보내심이 아니냐" },
+                    { id: "verse_34", ref: "빌3:20", text: "그러나 우리의 시민권은 하늘에 있는지라 거기로부터 구원하는 자 곧 주 예수 그리스도를 기다리노니" },
+                    { id: "verse_35", ref: "마28:18~20", text: "예수께서 나아와 말씀하여 이르시되 하늘과 땅의 모든 권세를 내게 주셨으니 그러므로 너희는 가서 모든 민족을 제자로 삼아 아버지와 아들과 성령의 이름으로 세례를 베풀고 내가 너희에게 분부한 모든 것을 가르쳐 지키게 하라 볼지어다 내가 세상 끝날까지 너희와 항상 함께 있으리라 하시니라" },
+                    { id: "verse_36", ref: "요일5:11-13", text: "또 증거는 이것이니 하나님이 우리에게 영생을 주신 것과 이 생명이 그의 아들 안에 있는 그것이니라 아들이 있는 자에게는 생명이 있고 하나님의 아들이 없는 자에게는 생명이 없느니라 내가 하나님의 아들의 이름을 믿는 너희에게 이것을 쓰는 것은 너희로 하여금 너희에게 영생이 있음을 알게 하려 함이라" },
+                    { id: "verse_37", ref: "요16:24", text: "지금까지는 너희가 내 이름으로 아무 것도 구하지 아니하였으나 구하라 그리하면 받으리니 너희 기쁨이 충만하리라" },
+                    { id: "verse_38", ref: "요일1:9", text: "만일 우리가 우리 죄를 자백하면 그는 미쁘시고 의로우사 우리 죄를 사하시며 우리를 모든 불의에서 깨끗하게 하실 것이요" },
+                    { id: "verse_39", ref: "고전10:13", text: "사람이 감당할 시험 밖에는 너희가 당한 것이 없나니 오직 하나님은 미쁘사 너희가 감당하지 못할 시험 당함을 허락하지 아니하시고 시험 당할 즈음에 또한 피할 길을 내사 너희로 능히 감당하게 하시느니라" },
+                    { id: "verse_40", ref: "잠3:5-6", text: "너는 마음을 다하여 여호와를 신뢰하고 네 명철을 의지하지 말라 너는 범사에 그를 인정하라 그리하면 네 길을 지도하시리라" }
+                ]
+            },
+            {
+                title: "사단의 정체",
+                verses: [
+                    { id: "verse_41", ref: "요16:11", text: "심판에 대하여라 함은 이 세상 임금이 심판을 받았음이라" },
+                    { id: "verse_42", ref: "고후11:4", text: "만일 누가 가서 우리가 전파하지 아니한 다른 예수를 전파하거나 혹은 너희가 받지 아니한 다른 영을 받게 하거나 혹은 너희가 받지 아니한 다른 복음을 받게 할 때에는 너희가 잘 용납하는구나" },
+                    { id: "verse_43", ref: "엡6:12", text: "우리의 씨름은 혈과 육을 상대하는 것이 아니요 통치자들과 권세들과 이 어둠의 세상 주관자들과 하늘에 있는 악의 영들을 상대함이라" },
+                    { id: "verse_44", ref: "엡2:2", text: "그 때에 너희는 그 가운데서 행하여 이 세상 풍조를 따르고 공중의 권세 잡은 자를 따랐으니 곧 지금 불순종의 아들들 가운데서 역사하는 영이라" },
+                    { id: "verse_45", ref: "고후4:4", text: "그 중에 이 세상의 신이 믿지 아니하는 자들의 마음을 혼미하게 하여 그리스도의 영광의 복음의 광채가 비치지 못하게 함이 그리스도는 하나님의 형상이니라" },
+                    { id: "verse_46", ref: "계12:9", text: "큰 용이 내쫓기니 옛 뱀 곧 마귀라고도 하고 사탄이라고도 하며 온 천하를 꾀는 자라 그가 땅으로 내쫓기니 그의 사자들도 그와 함께 내쫓기니라" },
+                    { id: "verse_47", ref: "행10:38", text: "하나님이 나사렛 예수에게 성령과 능력을 기름 붓듯 하셨으매 그가 두루 다니시며 선한 일을 행하시고 마귀에게 눌린 모든 사람을 고치셨으니 이는 하나님이 함께 하셨음이라" }
+                ]
+            },
+            {
+                title: "복음",
+                verses: [
+                    { id: "verse_48", ref: "고전1:18", text: "십자가의 도가 멸망하는 자들에게는 미련한 것이요 구원을 받는 우리에게는 하나님의 능력이라" },
+                    { id: "verse_49", ref: "롬1:16", text: "내가 복음을 부끄러워하지 아니하노니 이 복음은 모든 믿는 자에게 구원을 주시는 하나님의 능력이 됨이라 먼저는 유대인에게요 그리고 헬라인에게로다" },
+                    { id: "verse_50", ref: "롬1:2", text: "이 복음은 하나님이 선지자들을 통하여 그의 아들에 관하여 성경에 미리 약속하신 것이라" },
+                    { id: "verse_51", ref: "마11:28", text: "수고하고 무거운 짐 진 자들아 다 내게로 오라 내가 너희를 쉬게 하리라" },
+                    { id: "verse_52", ref: "요3:16", text: "하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 그를 믿는 자마다 멸망하지 않고 영생을 얻게 하려 함이라" }
+                ]
+            },
+            {
+                title: "성경",
+                verses: [
+                    { id: "verse_53", ref: "딤후3:16-17", text: "모든 성경은 하나님의 감동으로 된 것으로 교훈과 책망과 바르게 함과 의로 교육하기에 유익하니 이는 하나님의 사람으로 온전하게 하며 모든 선한 일을 행할 능력을 갖추게 하려 함이라" },
+                    { id: "verse_54", ref: "마5:18", text: "진실로 너희에게 이르노니 천지가 없어지기 전에는 율법의 일점 일획도 결코 없어지지 아니하고 다 이루리라" },
+                    { id: "verse_55", ref: "시119:105", text: "주의 말씀은 내 발에 등이요 내 길에 빛이니이다" },
+                    { id: "verse_56", ref: "사40:8", text: "풀은 마르고 꽃은 시드나 우리 하나님의 말씀은 영원히 서리라 하라" },
+                    { id: "verse_57", ref: "요20:31", text: "오직 이것을 기록함은 너희로 예수께서 하나님의 아들 그리스도이심을 믿게 하려 함이요 또 너희로 믿고 그 이름을 힘입어 생명을 얻게 하려 함이니라" },
+                    { id: "verse_58", ref: "계1:3", text: "이 예언의 말씀을 읽는 자와 듣는 자와 그 가운데에 기록한 것을 지키는 자는 복이 있나니 때가 가까움이라" },
+                    { id: "verse_59", ref: "히4:12", text: "하나님의 말씀은 살아 있고 활력이 있어 좌우에 날선 어떤 검보다도 예리하여 혼과 영과 및 관절과 골수를 찔러 쪼개기까지 하며 또 마음의 생각과 뜻을 판단하나니" },
+                    { id: "verse_60", ref: "롬15:4", text: "무엇이든지 전에 기록된 바는 우리의 교훈을 위하여 기록된 것이니 우리로 하여금 인내로 또는 성경의 위로로 소망을 가지게 함이니라" }
+                ]
+            },
+            {
+                title: "기도",
+                verses: [
+                    { id: "verse_61", ref: "요14:14", text: "내 이름으로 무엇이든지 내게 구하면 내가 행하리라" },
+                    { id: "verse_62", ref: "요15:7", text: "너희가 내 안에 거하고 내 말이 너희 안에 거하면 무엇이든지 원하는 대로 구하라 그리하면 이루리라" },
+                    { id: "verse_63", ref: "요16:24", text: "지금까지는 너희가 내 이름으로 아무 것도 구하지 아니하였으나 구하라 그리하면 받으리니 너희 기쁨이 충만하리라" },
+                    { id: "verse_64", ref: "요15:16", text: "너희가 나를 택한 것이 아니요 내가 너희를 택하여 세웠나니 이는 너희로 가서 열매를 맺게 하고 또 너희 열매가 항상 있게 하여 내 이름으로 아버지께 무엇을 구하든지 다 받게 하려 함이라" },
+                    { id: "verse_65", ref: "요일5:14", text: "그를 향하여 우리가 가진 바 담대함이 이것이니 그의 뜻대로 무엇을 구하면 들으심이라" },
+                    { id: "verse_66", ref: "렘33:2-3", text: "일을 행하시는 여호와, 그것을 만들며 성취하시는 여호와, 그의 이름을 여호와라 하는 이가 이와 같이 이르시도다 너는내게 부르짖으라 내가 네게 응답하겠고 네가 알지 못하는 크고 은밀한 일을 네게 보이리라" },
+                    { id: "verse_67", ref: "막11:24", text: "그러므로 내가 너희에게 말하노니 무엇이든지 기도하고 구하는 것은 받은 줄로 믿으라 그리하면 너희에게 그대로 되리라" },
+                    { id: "verse_68", ref: "마6:33", text: "그런즉 너희는 먼저 그의 나라와 그의 의를 구하라 그리하면 이 모든 것을 너희에게 더하시리라" },
+                    { id: "verse_69", ref: "눅11:13", text: "너희가 악할지라도 좋은 것을 자식에게 줄 줄 알거든 하물며 너희 하늘 아버지께서 구하는 자에게 성령을 주시지 않겠느냐 하시니라" },
+                    { id: "verse_70", ref: "빌4:6-7", text: "아무 것도 염려하지 말고 다만 모든 일에 기도와 간구로, 너희 구할 것을 감사 함으로 하나님께 아뢰라 그리하면 모든 지각에 뛰어난 하나님의 평강이 그리스도 예수 안에서 너희 마음과 생각을 지키시리라" }
+                ]
+            },
+            {
+                title: "전도",
+                verses: [
+                    { id: "verse_71", ref: "롬10:15", text: "그러나 내가 너희로 다시 생각나게 하려고 하나님께서 내게 주신 은혜로 말미암아 더욱 담대히 대략 너희에게 썼노니" },
+                    { id: "verse_72", ref: "막3:13-15", text: "또 산에 오르사 자기가 원하는 자들을 부르시니 나아온지라 이에 열둘을 세우셨으니 이는 자기와 함께 있게 하시고 또 보내사 전도도 하며 귀신을 내쫓는 권능도 가지게 하려 하심이러라" },
+                    { id: "verse_73", ref: "막16:16-17", text: "믿고 세례를 받는 사람은 구원을 얻을 것이요 믿지 않는 사람은 정죄를 받으리라 믿는 자들에게는 이런 표적이 따르리니 곧 그들이 내 이름으로 귀신을 쫓아내며 새 방언을 말하며" },
+                    { id: "verse_74", ref: "딤전2:4", text: "하나님은 모든 사람이 구원을 받으며 진리를 아는 데에 이르기를 원하시느니라" },
+                    { id: "verse_75", ref: "마24:14", text: "이 천국 복음이 모든 민족에게 증언되기 위하여 온 세상에 전파되리니 그제야 끝이 오리라" },
+                    { id: "verse_76", ref: "고전1:21", text: "하나님의 지혜에 있어서는 이 세상이 자기 지혜로 하나님을 알지 못하므로 하나님께서 전도의 미련한 것으로 믿는 자들을 구원하시기를 기뻐하셨도다" },
+                    { id: "verse_77", ref: "행13:48", text: "이방인들이 듣고 기뻐하여 하나님의 말씀을 찬송하며 영생을 주시기로 작정된 자는 다 믿더라" },
+                    { id: "verse_78", ref: "사60:1", text: "일어나라 빛을 발하라 이는 네 빛이 이르렀고 여호와의 영광이 네 위에 임하였음 이니라" },
+                    { id: "verse_79", ref: "마4:19", text: "말씀하시되 나를 따라오라 내가 너희를 사람을 낚는 어부가 되게 하리라 하시니" },
+                    { id: "verse_80", ref: "행5:42", text: "그들이 날마다 성전에 있든지 집에 있든지 예수는 그리스도라고 가르치기와 전도 하기를 그치지 아니하니라" }
+                ]
+            },
+            {
+                title: "믿음",
+                verses: [
+                    { id: "verse_81", ref: "롬1:17", text: "복음에는 하나님의 의가 나타나서 믿음으로 믿음에 이르게 하나니 기록된 바 오직 의인은 믿음으로 말미암아 살리라 함과 같으니라" },
+                    { id: "verse_82", ref: "히11:1", text: "믿음은 바라는 것들의 실상이요 보이지 않는 것들의 증거니" },
+                    { id: "verse_83", ref: "히11:6", text: "믿음이 없이는 하나님을 기쁘시게 하지 못하나니 하나님께 나아가는 자는 반드시 그가 계신 것과 또한 그가 자기를 찾는 자들에게 상 주시는 이심을 믿어야 할지니라" }
+                ]
+            },
+            {
+                title: "구원",
+                verses: [
+                    { id: "verse_84", ref: "요5:24", text: "내가 진실로 진실로 너희에게 이르노니 내 말을 듣고 또 나 보내신 이를 믿는 자는 영생을 얻었고 심판에 이르지 아니하나니 사망에서 생명으로 옮겼느니라" },
+                    { id: "verse_85", ref: "요일5:13", text: "내가 하나님의 아들의 이름을 믿는 너희에게 이것을 쓰는 것은 너희로 하여금 너희에게 영생이 있음을 알게 하려 함이라" },
+                    { id: "verse_86", ref: "롬8:1-2", text: "그러므로 이제 그리스도 예수 안에 있는 자에게는 결코 정죄함이 없나니 이는 그리스도 예수 안에 있는 생명의 성령의 법이 죄와 사망의 법에서 너를 해방하였음이라" },
+                    { id: "verse_87", ref: "고전2:12", text: "우리가 세상의 영을 받지 아니하고 오직 하나님으로부터 온 영을 받았으니 이는 우리로 하여금 하나님께서 우리에게 은혜로 주신 것들을 알게 하려 함이라" },
+                    { id: "verse_88", ref: "엡2:8-9", text: "너희는 그 은혜에 의하여 믿음으로 말미암아 구원을 받았으니 이것은 너희에게서 난 것이 아니요 하나님의 선물이라 행위에서 난 것이 아니니 이는 누구든지 자랑하지 못하게 함이라" },
+                    { id: "verse_89", ref: "고후5:17", text: "그런즉 누구든지 그리스도 안에 있으면 새로운 피조물이라 이전 것은 지나갔으니 보라 새 것이 되었도다" },
+                    { id: "verse_90", ref: "롬12:1", text: "그러므로 형제들아 내가 하나님의 모든 자비하심으로 너희를 권하노니 너희 몸을 하나님이 기뻐하시는 거룩한 산 제물 드리라 이는 너희가 드릴 영적 예배니라" }
+                ]
+            },
+            {
+                title: "전도자의 삶",
+                verses: [
+                    { id: "verse_91", ref: "고전4:1", text: "사람이 마땅히 우리를 그리스도의 일꾼이요 하나님의 비밀을 맡은 자로 여길지어다" },
+                    { id: "verse_92", ref: "약4:7", text: "그런즉 너희는 하나님께 복종할지어다 마귀를 대적하라 그리하면 너희를 피하리라" },
+                    { id: "verse_93", ref: "벧전5:7-8", text: "너희 염려를 다 주께 맡기라 이는 그가 너희를 돌보심이라 근신하라 깨어라 너희 대적 마귀가 우는 사자 같이 두루 다니며 삼킬 자를 찾나니" },
+                    { id: "verse_94", ref: "사40:31", text: "오직 여호와를 앙망하는 자는 새 힘을 얻으리니 독수리가 날개치며 올라감 같을 것이요 달음박질하여도 곤비하지 아니하겠고 걸어가도 피곤하지 아니하리로다" },
+                    { id: "verse_95", ref: "전12:1", text: "너는 청년의 때에 너의 창조주를 기억하라 곧 곤고한 날이 이르기 전에, 나는 아무 낙이 없다고 할 해들이 가깝기 전에" },
+                    { id: "verse_96", ref: "빌1:6", text: "너희 안에서 착한 일을 시작하신 이가 그리스도 예수의 날까지 이루실 줄을 우리는 확신하노라" },
+                    { id: "verse_97", ref: "빌4:13", text: "내게 능력 주시는 자 안에서 내가 모든 것을 할 수 있느니라" },
+                    { id: "verse_98", ref: "갈2:20", text: "내가 그리스도와 함께 십자가에 못 박혔나니 그런즉 이제는 내가 사는 것이 아니요 오직 내 안에 그리스도께서 사시는 것이라 이제 내가 육체 가운데 사는 것은 나를 사랑하사 나를 위하여 자기 자신을 버리신 하나님의 아들을 믿는 믿음 안에서 사는 것이라" },
+                    { id: "verse_99", ref: "롬12:2", text: "너희는 이 세대를 본받지 말고 오직 마음을 새롭게 함으로 변화를 받아 하나님의 선하시고 기뻐하시고 온전하신 뜻이 무엇인지 분별하도록 하라" },
+                    { id: "verse_100", ref: "딤후2:1-2", text: "내 아들아 그러므로 너는 그리스도 예수 안에 있는 은혜 가운데서 강하고 또 네가 많은 증인 앞에서 내게 들은 바를 충성된 사람들에게 부탁하라 그들이 또 다른 사람들을 가르칠 수 있으리라" }
+                ]
+            }
+        ];
+        
+        let currentTheme = '전체 보기'; // 현재 선택된 주제 상태
+
+        const themeSelectorsEl = document.getElementById('theme-selectors');
+        const verseListEl = document.getElementById('verse-list');
+        const noVersesMessageEl = document.getElementById('no-verses-message');
+
+        /**
+         * 주제 목록을 추출하고 '전체 보기'를 포함하여 버튼을 렌더링합니다.
+         */
+        function renderThemeSelectors() {
+            // allScriptures의 title을 주제로 사용합니다.
+            const themes = allScriptures.map(section => section.title);
+            // '전체 보기'를 목록 맨 앞에 추가합니다.
+            const themeArray = ['전체 보기', ...themes];
+
+            themeSelectorsEl.innerHTML = themeArray.map(theme => `
+                <button
+                    class="theme-button px-3 py-1 text-xs sm:text-sm font-semibold rounded-full transition duration-150 ease-in-out whitespace-nowrap
+                           ${theme === currentTheme ? 'active' : 'bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'}
+                           focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                    data-theme="${theme}"
+                >
+                    ${theme}
+                </button>
+            `).join('');
+
+            // 버튼에 클릭 이벤트 리스너를 추가합니다.
+            themeSelectorsEl.querySelectorAll('.theme-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const selectedTheme = e.currentTarget.dataset.theme;
+                    if (selectedTheme !== currentTheme) {
+                        currentTheme = selectedTheme;
+                        // 모든 버튼의 active 상태를 제거하고 선택된 버튼에만 active 클래스를 추가합니다.
+                        themeSelectorsEl.querySelectorAll('.theme-button').forEach(btn => {
+                            btn.classList.remove('active', 'bg-emerald-500', 'text-white');
+                            btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-emerald-50', 'hover:text-emerald-600');
+                        });
+                        e.currentTarget.classList.add('active', 'bg-emerald-500', 'text-white');
+                        e.currentTarget.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-emerald-50', 'hover:text-emerald-600');
+                        filterAndRenderVerses();
+                    }
+                });
+            });
+        }
+
+        /**
+         * 현재 선택된 주제에 따라 구절 목록을 필터링하고 렌더링합니다.
+         */
+        function filterAndRenderVerses() {
+            let sectionsToRender = [];
+
+            if (currentTheme === '전체 보기') {
+                sectionsToRender = allScriptures;
+            } else {
+                const selectedSection = allScriptures.find(section => section.title === currentTheme);
+                if (selectedSection) {
+                    sectionsToRender = [selectedSection];
+                }
+            }
+
+            let html = '';
+
+            sectionsToRender.forEach(section => {
+                section.verses.forEach(verse => {
+                    // 구절 번호는 전체 100구절 기준으로 매기기 위해 verse.id의 숫자 사용
+                    const verseNumberMatch = verse.id.match(/\d+/);
+                    const displayVerseNumber = verseNumberMatch ? parseInt(verseNumberMatch[0]) : 0;
+                    
+                    html += `
+                        <div class="verse-item mb-4">
+                            <!-- 1. Theme and Counter Header: [소주제] - [번호]/100 형식 -->
+                            <div class="text-xs sm:text-sm font-bold text-gray-700 mb-0.5 px-3 py-1 bg-emerald-100/50 rounded-t-xl">
+                                ${section.title} - ${displayVerseNumber}/100
+                            </div>
+                            
+                            <!-- 2. Verse Content Card: 장절과 본문 같은 줄에 표시 -->
+                            <div class="verse-card bg-white p-4 rounded-b-xl shadow-md border border-gray-100 transition duration-200">
+                                <p class="text-gray-800 text-sm sm:text-base leading-relaxed">
+                                    <strong class="text-blue-700 font-extrabold mr-2 whitespace-nowrap">${verse.ref}</strong>${verse.text}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            // 최종 렌더링
+            verseListEl.innerHTML = html;
+            if (sectionsToRender.length === 0 || html === '') {
+                noVersesMessageEl.classList.remove('hidden');
+            } else {
+                noVersesMessageEl.classList.add('hidden');
+            }
+        }
+
+        // 초기화
+        window.onload = function() {
+            renderThemeSelectors();
+            filterAndRenderVerses(); // 초기에는 '전체 보기'가 선택된 상태로 렌더링됨
+        };
+    </script>
+</body>
+</html>

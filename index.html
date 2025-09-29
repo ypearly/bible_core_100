@@ -27,12 +27,21 @@
         <!-- 제목 및 설명 -->
         <header class="text-center mb-8">
             <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">복음성구 100구절</h1>
-            <p class="text-sm sm:text-md text-gray-500">원하는 주제를 선택하여 관련 구절들을 살펴보세요.</p>
+            <p class="text-sm sm:text-md text-gray-500">원하는 주제를 선택하거나 단어를 검색해 보세요.</p>
         </header>
 
-        <!-- 주제 선택 버튼 그룹 (flex-wrap 적용) -->
+        <!-- [순서 변경: 주제 선택 버튼 그룹이 검색 필드보다 위로 이동] -->
+        <!-- 주제 선택 버튼 그룹 (flex-wrap으로 2줄 이상 자동 정렬) -->
         <div id="theme-selectors" class="flex flex-wrap justify-center gap-2 p-4 bg-white rounded-xl shadow-lg mb-8">
             <!-- 주제 버튼들이 여기에 렌더링됩니다 -->
+        </div>
+
+        <!-- 검색 필드 -->
+        <div class="mb-6 p-4 bg-white rounded-xl shadow-lg border border-gray-100">
+            <label for="search-input" class="block text-sm font-medium text-gray-700 mb-2">구절 내용 단어 검색</label>
+            <input type="text" id="search-input" placeholder="예) 그리스도, 능력, 영생"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-base"
+                   onkeyup="handleSearch(event)">
         </div>
 
         <!-- 성경 구절 목록 -->
@@ -40,9 +49,9 @@
             <!-- 필터링된 구절들이 여기에 렌더링됩니다 -->
         </div>
 
-        <!-- 구절이 없을 때 표시되는 메시지 (초기에는 숨김) -->
+        <!-- 구절이 없을 때 표시되는 메시지 -->
         <div id="no-verses-message" class="hidden text-center p-8 bg-white rounded-xl shadow-lg text-gray-500">
-            <p class="text-lg font-medium">선택하신 주제에 해당하는 구절이 없습니다.</p>
+            <p class="text-lg font-medium" id="empty-message-text">선택하신 주제에 해당하는 구절이 없습니다.</p>
         </div>
     </div>
 
@@ -102,7 +111,7 @@
                     { id: "verse_33", ref: "히1:14", text: "모든 천사들은 섬기는 영으로서 구원 받을 상속자들을 위하여 섬기라고 보내심이 아니냐" },
                     { id: "verse_34", ref: "빌3:20", text: "그러나 우리의 시민권은 하늘에 있는지라 거기로부터 구원하는 자 곧 주 예수 그리스도를 기다리노니" },
                     { id: "verse_35", ref: "마28:18~20", text: "예수께서 나아와 말씀하여 이르시되 하늘과 땅의 모든 권세를 내게 주셨으니 그러므로 너희는 가서 모든 민족을 제자로 삼아 아버지와 아들과 성령의 이름으로 세례를 베풀고 내가 너희에게 분부한 모든 것을 가르쳐 지키게 하라 볼지어다 내가 세상 끝날까지 너희와 항상 함께 있으리라 하시니라" },
-                    { id: "verse_36", ref: "요일5:11-13", text: "또 증거는 이것이니 하나님이 우리에게 영생을 주신 것과 이 생명이 그의 아들 안에 있는 그것이니라 아들이 있는 자에게는 생명이 있고 하나님의 아들이 없는 자에게는 생명이 없느니라 내가 하나님의 아들의 이름을 믿는 너희에게 이것을 쓰는 것은 너희로 하여금 너희에게 영생이 있음을 알게 하려 함이라" },
+                    { id: "verse_36", ref: "요일5:11-13", text: "또 증거는 이것이니 하나님이 우리에게 영생을 주신 것과 이 생명이 그의 아들 안에 있는 그것이니라 아들이 있는 자에게는 생명이 있고 하나님의 아들이 없는 자에게는 생명이 없느느니라 내가 하나님의 아들의 이름을 믿는 너희에게 이것을 쓰는 것은 너희로 하여금 너희에게 영생이 있음을 알게 하려 함이라" },
                     { id: "verse_37", ref: "요16:24", text: "지금까지는 너희가 내 이름으로 아무 것도 구하지 아니하였으나 구하라 그리하면 받으리니 너희 기쁨이 충만하리라" },
                     { id: "verse_38", ref: "요일1:9", text: "만일 우리가 우리 죄를 자백하면 그는 미쁘시고 의로우사 우리 죄를 사하시며 우리를 모든 불의에서 깨끗하게 하실 것이요" },
                     { id: "verse_39", ref: "고전10:13", text: "사람이 감당할 시험 밖에는 너희가 당한 것이 없나니 오직 하나님은 미쁘사 너희가 감당하지 못할 시험 당함을 허락하지 아니하시고 시험 당할 즈음에 또한 피할 길을 내사 너희로 능히 감당하게 하시느니라" },
@@ -212,26 +221,48 @@
         ];
         
         let currentTheme = '전체 보기'; // 현재 선택된 주제 상태
+        let currentSearchTerm = ''; // 현재 검색어 상태
 
+        // DOM 요소 캐시
         const themeSelectorsEl = document.getElementById('theme-selectors');
         const verseListEl = document.getElementById('verse-list');
         const noVersesMessageEl = document.getElementById('no-verses-message');
+        const searchInputEl = document.getElementById('search-input');
+        const emptyMessageTextEl = document.getElementById('empty-message-text');
 
+        /**
+         * 텍스트 내에서 검색어와 일치하는 부분을 강조 표시 HTML로 감쌉니다.
+         * @param {string} text - 원본 텍스트
+         * @param {string} term - 검색어
+         * @returns {string} - 강조 표시된 HTML 문자열
+         */
+        function highlightText(text, term) {
+            if (!term) return text;
+            
+            // 정규식 특수 문자 이스케이프
+            const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // 검색어에 대해 전역(g) 및 대소문자 무시(i) 정규식 생성
+            const regex = new RegExp(`(${escapedTerm})`, 'gi');
+            
+            // 일치하는 부분을 <span class="highlight">로 감싸고, $1은 일치된 텍스트 자체를 나타냄
+            return text.replace(regex, '<span class="bg-yellow-300 font-bold rounded px-0.5">$1</span>');
+        }
+        
         /**
          * 주제 목록을 추출하고 '전체 보기'를 포함하여 버튼을 렌더링합니다.
          */
         function renderThemeSelectors() {
-            // allScriptures의 title을 주제로 사용합니다.
             const themes = allScriptures.map(section => section.title);
-            // '전체 보기'를 목록 맨 앞에 추가합니다.
             const themeArray = ['전체 보기', ...themes];
 
             themeSelectorsEl.innerHTML = themeArray.map(theme => `
                 <button
                     class="theme-button px-3 py-1 text-xs sm:text-sm font-semibold rounded-full transition duration-150 ease-in-out whitespace-nowrap
-                           ${theme === currentTheme ? 'active' : 'bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'}
+                           ${theme === currentTheme && !currentSearchTerm ? 'active' : 'bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'}
+                           ${currentSearchTerm ? 'opacity-50 cursor-default' : ''}
                            focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                     data-theme="${theme}"
+                    ${currentSearchTerm ? 'disabled' : ''}
                 >
                     ${theme}
                 </button>
@@ -240,16 +271,13 @@
             // 버튼에 클릭 이벤트 리스너를 추가합니다.
             themeSelectorsEl.querySelectorAll('.theme-button').forEach(button => {
                 button.addEventListener('click', (e) => {
+                    if (currentSearchTerm) return; // 검색 중일 때는 주제 필터링 비활성화
+                    
                     const selectedTheme = e.currentTarget.dataset.theme;
                     if (selectedTheme !== currentTheme) {
                         currentTheme = selectedTheme;
-                        // 모든 버튼의 active 상태를 제거하고 선택된 버튼에만 active 클래스를 추가합니다.
-                        themeSelectorsEl.querySelectorAll('.theme-button').forEach(btn => {
-                            btn.classList.remove('active', 'bg-emerald-500', 'text-white');
-                            btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-emerald-50', 'hover:text-emerald-600');
-                        });
-                        e.currentTarget.classList.add('active', 'bg-emerald-500', 'text-white');
-                        e.currentTarget.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-emerald-50', 'hover:text-emerald-600');
+                        // 모든 버튼의 active 상태를 업데이트합니다.
+                        updateThemeButtonStyles(selectedTheme);
                         filterAndRenderVerses();
                     }
                 });
@@ -257,49 +285,121 @@
         }
 
         /**
-         * 현재 선택된 주제에 따라 구절 목록을 필터링하고 렌더링합니다.
+         * 주제 버튼의 활성화/비활성화 스타일을 업데이트합니다.
+         */
+        function updateThemeButtonStyles(activeTheme) {
+            themeSelectorsEl.querySelectorAll('.theme-button').forEach(btn => {
+                btn.classList.remove('active', 'bg-emerald-500', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-emerald-50', 'hover:text-emerald-600');
+
+                if (btn.dataset.theme === activeTheme && !currentSearchTerm) {
+                    btn.classList.add('active', 'bg-emerald-500', 'text-white');
+                    btn.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-emerald-50', 'hover:text-emerald-600');
+                }
+                
+                // 검색 중일 때 버튼 비활성화 시각화
+                if (currentSearchTerm) {
+                    btn.setAttribute('disabled', 'true');
+                    btn.classList.add('opacity-50', 'cursor-default');
+                    btn.classList.remove('active'); // 검색 중에는 모든 주제 버튼의 active 상태를 제거
+                } else {
+                    btn.removeAttribute('disabled');
+                    btn.classList.remove('opacity-50', 'cursor-default');
+                }
+            });
+        }
+        
+        /**
+         * 검색어 입력 처리 및 렌더링을 시작합니다.
+         */
+        function handleSearch(event) {
+            // 엔터 키 입력 시 즉시 검색
+            if (event.keyCode === 13) {
+                searchInputEl.blur(); // 키보드 숨김
+            }
+            
+            const term = searchInputEl.value.trim();
+            if (term === currentSearchTerm) return;
+
+            currentSearchTerm = term;
+            updateThemeButtonStyles(currentTheme); // 검색 상태에 따라 버튼 비활성화/스타일 업데이트
+            filterAndRenderVerses();
+        }
+
+
+        /**
+         * 현재 선택된 주제 또는 검색어에 따라 구절 목록을 필터링하고 렌더링합니다.
          */
         function filterAndRenderVerses() {
-            let sectionsToRender = [];
+            let filteredVerses = [];
+            const searchLower = currentSearchTerm.toLowerCase();
+            
+            // 모든 구절을 담는 배열 생성 (검색을 위해)
+            const allVerses = allScriptures.flatMap(section => 
+                section.verses.map(verse => ({
+                    ...verse,
+                    themeTitle: section.title
+                }))
+            );
 
-            if (currentTheme === '전체 보기') {
-                sectionsToRender = allScriptures;
+            if (currentSearchTerm) {
+                // 검색어가 있을 경우: 전체 구절에서 검색
+                filteredVerses = allVerses.filter(verse => 
+                    verse.text.toLowerCase().includes(searchLower) || 
+                    verse.ref.toLowerCase().includes(searchLower)
+                );
+                emptyMessageTextEl.textContent = `"${currentSearchTerm}"(이) 포함된 구절을 찾을 수 없습니다.`;
             } else {
-                const selectedSection = allScriptures.find(section => section.title === currentTheme);
-                if (selectedSection) {
-                    sectionsToRender = [selectedSection];
+                // 검색어가 없을 경우: 주제별 필터링
+                let sectionsToRender = [];
+                if (currentTheme === '전체 보기') {
+                    sectionsToRender = allScriptures;
+                } else {
+                    const selectedSection = allScriptures.find(section => section.title === currentTheme);
+                    if (selectedSection) {
+                        sectionsToRender = [selectedSection];
+                    }
                 }
+                
+                filteredVerses = sectionsToRender.flatMap(section => 
+                    section.verses.map(verse => ({
+                        ...verse,
+                        themeTitle: section.title
+                    }))
+                );
+                emptyMessageTextEl.textContent = `선택하신 주제에 해당하는 구절이 없습니다.`;
             }
 
             let html = '';
 
-            sectionsToRender.forEach(section => {
-                section.verses.forEach(verse => {
-                    // 구절 번호는 전체 100구절 기준으로 매기기 위해 verse.id의 숫자 사용
-                    const verseNumberMatch = verse.id.match(/\d+/);
-                    const displayVerseNumber = verseNumberMatch ? parseInt(verseNumberMatch[0]) : 0;
-                    
-                    html += `
-                        <div class="verse-item mb-4">
-                            <!-- 1. Theme and Counter Header: [소주제] - [번호]/100 형식 -->
-                            <div class="text-xs sm:text-sm font-bold text-gray-700 mb-0.5 px-3 py-1 bg-emerald-100/50 rounded-t-xl">
-                                ${section.title} - ${displayVerseNumber}/100
-                            </div>
-                            
-                            <!-- 2. Verse Content Card: 장절과 본문 같은 줄에 표시 -->
-                            <div class="verse-card bg-white p-4 rounded-b-xl shadow-md border border-gray-100 transition duration-200">
-                                <p class="text-gray-800 text-sm sm:text-base leading-relaxed">
-                                    <strong class="text-blue-700 font-extrabold mr-2 whitespace-nowrap">${verse.ref}</strong>${verse.text}
-                                </p>
-                            </div>
+            filteredVerses.forEach(item => {
+                const verseNumberMatch = item.id.match(/\d+/);
+                const displayVerseNumber = verseNumberMatch ? parseInt(verseNumberMatch[0]) : 0;
+                
+                // 검색어가 있을 때만 강조 표시 적용
+                const highlightedRef = highlightText(item.ref, currentSearchTerm);
+                const highlightedText = highlightText(item.text, currentSearchTerm);
+
+                html += `
+                    <div class="verse-item mb-4">
+                        <!-- 1. Theme and Counter Header: [소주제] - [번호]/100 형식 -->
+                        <div class="text-xs sm:text-sm font-bold text-gray-700 mb-0.5 px-3 py-1 bg-emerald-100/50 rounded-t-xl">
+                            ${item.themeTitle} - ${displayVerseNumber}/100
                         </div>
-                    `;
-                });
+                        
+                        <!-- 2. Verse Content Card: 장절과 본문 같은 줄에 표시 -->
+                        <div class="verse-card bg-white p-4 rounded-b-xl shadow-md border border-gray-100 transition duration-200">
+                            <p class="text-gray-800 text-sm sm:text-base leading-relaxed">
+                                <strong class="text-blue-700 font-extrabold mr-2 whitespace-nowrap">${highlightedRef}</strong>${highlightedText}
+                            </p>
+                        </div>
+                    </div>
+                `;
             });
 
-            // 최종 렌더링
+            // 최종 렌더링 및 메시지 표시
             verseListEl.innerHTML = html;
-            if (sectionsToRender.length === 0 || html === '') {
+            if (filteredVerses.length === 0) {
                 noVersesMessageEl.classList.remove('hidden');
             } else {
                 noVersesMessageEl.classList.add('hidden');

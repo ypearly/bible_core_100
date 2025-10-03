@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>복음성구 100구절</title>
-    <!-- Tailwind CSS CDN 로드 -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <style>
         /* Inter 폰트 설정 */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
@@ -13,51 +13,86 @@
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fb;
         }
-        /* 선택된 버튼 스타일 */
-        .theme-button.active {
-            background-color: #10b981; /* Primary Green - Emerald */
+        /* 선택된 필터 버튼 스타일 */
+        .filter-button.active {
             color: white;
             box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3), 0 2px 4px -2px rgba(16, 185, 129, 0.2);
+        }
+        /* 암송 모드 블라인드 스타일 */
+        .blind-word {
+            position: relative;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        /* 마스크 스타일: 글자를 가리고 배경색 적용 */
+        .blind-mask {
+            background-color: #3f3f46; /* Zinc-700, 어두운 배경색 */
+            color: transparent; /* 글자를 투명하게 */
+            border-radius: 4px;
+            padding: 0 4px;
+            line-height: 1.5;
+            transition: background-color 0.3s;
+            font-weight: 500;
+            user-select: none; /* 텍스트 선택 방지 */
+        }
+        /* 마스크가 클릭되어 공개된 스타일 */
+        .blind-mask.revealed {
+            background-color: transparent; 
+            color: #27272a; 
+            font-weight: 500;
+            cursor: default;
+        }
+        /* 액션 버튼 활성화 스타일 */
+        .action-button {
+             background-color: #f3f4f6; /* Gray-100 */
+             color: #4b5563; /* Gray-600 */
+             transition: all 0.15s;
+        }
+        .action-button.active.favorite {
+            background-color: #f59e0b; /* Amber-500 */
+            color: white;
+        }
+        .action-button.active.memorized {
+            background-color: #10b981; /* Emerald-500 */
+            color: white;
+        }
+        .action-button.active.blind {
+            background-color: #6366f1; /* Violet-500 */
+            color: white;
         }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
 
     <div class="max-w-4xl mx-auto">
-        <!-- 제목 및 설명 -->
         <header class="text-center mb-8">
             <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">복음성구 100구절</h1>
             <p class="text-sm sm:text-md text-gray-500">원하는 주제를 선택하거나 단어를 검색해 보세요.</p>
         </header>
 
-        <!-- [순서 변경: 주제 선택 버튼 그룹이 검색 필드보다 위로 이동] -->
-        <!-- 주제 선택 버튼 그룹 (flex-wrap으로 2줄 이상 자동 정렬) -->
-        <div id="theme-selectors" class="flex flex-wrap justify-center gap-2 p-4 bg-white rounded-xl shadow-lg mb-8">
-            <!-- 주제 버튼들이 여기에 렌더링됩니다 -->
-        </div>
+        <div id="unified-filters" class="flex flex-wrap justify-center gap-2 p-4 bg-white rounded-xl shadow-lg mb-8 border border-emerald-100">
+            </div>
 
-        <!-- 검색 필드 -->
         <div class="mb-6 p-4 bg-white rounded-xl shadow-lg border border-gray-100">
             <label for="search-input" class="block text-sm font-medium text-gray-700 mb-2">구절 내용 단어 검색</label>
             <input type="text" id="search-input" placeholder="예) 그리스도, 능력, 영생"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-base"
-                   onkeyup="handleSearch(event)">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-base"
+                    onkeyup="handleSearch(event)">
         </div>
+        
+        <div id="verse-list" class="space-y-6">
+            </div>
 
-        <!-- 성경 구절 목록 -->
-        <div id="verse-list" class="space-y-4">
-            <!-- 필터링된 구절들이 여기에 렌더링됩니다 -->
-        </div>
-
-        <!-- 구절이 없을 때 표시되는 메시지 -->
         <div id="no-verses-message" class="hidden text-center p-8 bg-white rounded-xl shadow-lg text-gray-500">
-            <p class="text-lg font-medium" id="empty-message-text">선택하신 주제에 해당하는 구절이 없습니다.</p>
+            <p class="text-lg font-medium" id="empty-message-text">선택하신 조건에 해당하는 구절이 없습니다.</p>
         </div>
     </div>
 
     <script>
-        // 100구절 성경 구절 데이터 (소주제 및 구절 포함)
+        // 100구절 성경 구절 데이터 (데이터는 이전과 동일하게 유지)
         const allScriptures = [
+            // ... (데이터는 동일하게 유지) ...
             {
                 title: "원래 인간과 근본 문제",
                 verses: [
@@ -220,185 +255,292 @@
             }
         ];
         
-        let currentTheme = '전체 보기'; // 현재 선택된 주제 상태
-        let currentSearchTerm = ''; // 현재 검색어 상태
+        // 상태 변수
+        let currentFilter = '전체 보기'; 
+        let currentSearchTerm = ''; 
 
         // DOM 요소 캐시
-        const themeSelectorsEl = document.getElementById('theme-selectors');
+        const unifiedFiltersEl = document.getElementById('unified-filters');
         const verseListEl = document.getElementById('verse-list');
         const noVersesMessageEl = document.getElementById('no-verses-message');
         const searchInputEl = document.getElementById('search-input');
         const emptyMessageTextEl = document.getElementById('empty-message-text');
 
-        /**
-         * 텍스트 내에서 검색어와 일치하는 부분을 강조 표시 HTML로 감쌉니다.
-         * @param {string} text - 원본 텍스트
-         * @param {string} term - 검색어
-         * @returns {string} - 강조 표시된 HTML 문자열
-         */
+
+        // --- 상태 관리 및 토글 로직 ---
+
+        // 상태 관리 함수 (localStorage 사용)
+        function loadVerseStates() {
+            const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            const memorized = JSON.parse(localStorage.getItem('memorized')) || [];
+            const blindMode = JSON.parse(localStorage.getItem('blindMode')) || []; // 암송 모드 상태 추가
+            return { favorites, memorized, blindMode };
+        }
+        
+        // 즐겨찾기/암송완료 상태 토글 (필터 연동)
+        function toggleState(verseId, stateKey) {
+            const states = JSON.parse(localStorage.getItem(stateKey)) || [];
+            const index = states.indexOf(verseId);
+            if (index > -1) {
+                states.splice(index, 1);
+            } else {
+                states.push(verseId);
+            }
+            localStorage.setItem(stateKey, JSON.stringify(states));
+            filterAndRenderVerses(); // 상태 변경 후 목록 재렌더링 및 필터 적용
+        }
+
+        // 암송 모드 상태 토글 (블라인드 처리)
+        function toggleBlindMode(verseId) {
+            const { blindMode } = loadVerseStates();
+            const index = blindMode.indexOf(verseId);
+            if (index > -1) {
+                blindMode.splice(index, 1);
+            } else {
+                blindMode.push(verseId);
+            }
+            localStorage.setItem('blindMode', JSON.stringify(blindMode));
+
+            // 개별 구절 카드만 업데이트하여 깜빡임 최소화
+            const verseItemEl = document.querySelector(`.verse-item[data-id="${verseId}"]`);
+            if (verseItemEl) {
+                 // 해당 구절의 데이터 재조립 및 렌더링
+                const verseData = getVerseData(verseId);
+                const newHtml = createVerseCardHtml(verseData);
+                verseItemEl.outerHTML = newHtml;
+                // 새로운 카드에 이벤트 리스너 재부착
+                attachEventListenersToVerse(verseId);
+            } else {
+                // 필터링 등으로 목록에 없으면 전체 렌더링 (안전장치)
+                filterAndRenderVerses(); 
+            }
+        }
+        
+        // 모든 구절 데이터에서 특정 ID의 구절을 찾는 헬퍼 함수
+        function getVerseData(verseId) {
+            const { favorites, memorized, blindMode } = loadVerseStates();
+            for (const section of allScriptures) {
+                for (const verse of section.verses) {
+                    if (verse.id === verseId) {
+                        return {
+                            ...verse,
+                            themeTitle: section.title,
+                            isFavorite: favorites.includes(verse.id),
+                            isMemorized: memorized.includes(verse.id),
+                            isBlindMode: blindMode.includes(verse.id)
+                        };
+                    }
+                }
+            }
+            return null;
+        }
+
+
+        // --- 암송 모드 (블라인드) 관련 로직 ---
+        
+        function createBlindText(text) {
+            // 구두점과 공백을 기준으로 텍스트를 단어 배열로 분할
+            // \s+ (하나 이상의 공백) 또는 [.,:;?!]+ (하나 이상의 구두점)을 구분자로 사용하고, 괄호로 묶어 구분자도 결과에 포함
+            const words = text.split(/(\s+|[,.:;?!]+)/);
+            let result = '';
+            let actualWordIndex = 0;
+
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                const trimmedWord = word.trim();
+                
+                // 공백이나 구두점은 블라인드 처리하지 않음
+                if (trimmedWord === '' || /^[.,:;?!]+$/.test(word)) {
+                    result += word;
+                    continue;
+                }
+
+                actualWordIndex++;
+
+                // 성경 구절은 대부분 쉼표 후에도 공백이 없으므로, 첫 단어만 공개
+                if (actualWordIndex === 1) {
+                    result += word;
+                } else {
+                    // 나머지 단어는 블라인드 마스크 처리
+                    result += `
+                        <span class="blind-word" onclick="revealWord(this)">
+                            <span class="blind-mask">${word}</span>
+                        </span>
+                    `;
+                }
+            }
+            return result;
+        }
+
+        // 단어 공개 함수
+        window.revealWord = function(element) {
+            const mask = element.querySelector('.blind-mask');
+            mask.classList.add('revealed');
+            // 공개된 단어의 클릭 이벤트를 제거하거나 비활성화
+            element.removeAttribute('onclick');
+            element.style.cursor = 'default';
+        }
+
+        // 텍스트 강조 표시 (검색어)
         function highlightText(text, term) {
             if (!term) return text;
-            
-            // 정규식 특수 문자 이스케이프
             const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // 검색어에 대해 전역(g) 및 대소문자 무시(i) 정규식 생성
             const regex = new RegExp(`(${escapedTerm})`, 'gi');
-            
-            // 일치하는 부분을 <span class="highlight">로 감싸고, $1은 일치된 텍스트 자체를 나타냄
             return text.replace(regex, '<span class="bg-yellow-300 font-bold rounded px-0.5">$1</span>');
         }
-        
-        /**
-         * 주제 목록을 추출하고 '전체 보기'를 포함하여 버튼을 렌더링합니다.
-         */
-        function renderThemeSelectors() {
-            const themes = allScriptures.map(section => section.title);
-            const themeArray = ['전체 보기', ...themes];
 
-            themeSelectorsEl.innerHTML = themeArray.map(theme => `
-                <button
-                    class="theme-button px-3 py-1 text-xs sm:text-sm font-semibold rounded-full transition duration-150 ease-in-out whitespace-nowrap
-                           ${theme === currentTheme && !currentSearchTerm ? 'active' : 'bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'}
-                           ${currentSearchTerm ? 'opacity-50 cursor-default' : ''}
-                           focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                    data-theme="${theme}"
-                    ${currentSearchTerm ? 'disabled' : ''}
-                >
-                    ${theme}
-                </button>
-            `).join('');
 
-            // 버튼에 클릭 이벤트 리스너를 추가합니다.
-            themeSelectorsEl.querySelectorAll('.theme-button').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    if (currentSearchTerm) return; // 검색 중일 때는 주제 필터링 비활성화
-                    
-                    const selectedTheme = e.currentTarget.dataset.theme;
-                    if (selectedTheme !== currentTheme) {
-                        currentTheme = selectedTheme;
-                        // 모든 버튼의 active 상태를 업데이트합니다.
-                        updateThemeButtonStyles(selectedTheme);
-                        filterAndRenderVerses();
-                    }
-                });
-            });
-        }
+        // --- UI 렌더링 및 이벤트 로직 ---
 
-        /**
-         * 주제 버튼의 활성화/비활성화 스타일을 업데이트합니다.
-         */
-        function updateThemeButtonStyles(activeTheme) {
-            themeSelectorsEl.querySelectorAll('.theme-button').forEach(btn => {
-                btn.classList.remove('active', 'bg-emerald-500', 'text-white');
-                btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-emerald-50', 'hover:text-emerald-600');
-
-                if (btn.dataset.theme === activeTheme && !currentSearchTerm) {
-                    btn.classList.add('active', 'bg-emerald-500', 'text-white');
-                    btn.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-emerald-50', 'hover:text-emerald-600');
-                }
-                
-                // 검색 중일 때 버튼 비활성화 시각화
-                if (currentSearchTerm) {
-                    btn.setAttribute('disabled', 'true');
-                    btn.classList.add('opacity-50', 'cursor-default');
-                    btn.classList.remove('active'); // 검색 중에는 모든 주제 버튼의 active 상태를 제거
-                } else {
-                    btn.removeAttribute('disabled');
-                    btn.classList.remove('opacity-50', 'cursor-default');
-                }
-            });
-        }
-        
-        /**
-         * 검색어 입력 처리 및 렌더링을 시작합니다.
-         */
+        // 검색어 입력 처리 및 렌더링을 시작합니다.
         function handleSearch(event) {
-            // 엔터 키 입력 시 즉시 검색
             if (event.keyCode === 13) {
-                searchInputEl.blur(); // 키보드 숨김
+                searchInputEl.blur(); 
             }
             
             const term = searchInputEl.value.trim();
             if (term === currentSearchTerm) return;
 
             currentSearchTerm = term;
-            updateThemeButtonStyles(currentTheme); // 검색 상태에 따라 버튼 비활성화/스타일 업데이트
+            
+            if (currentSearchTerm) {
+                updateFilterButtonStyles(null);
+            } else {
+                updateFilterButtonStyles(currentFilter);
+            }
             filterAndRenderVerses();
         }
 
 
         /**
-         * 현재 선택된 주제 또는 검색어에 따라 구절 목록을 필터링하고 렌더링합니다.
+         * 구절 카드 HTML 생성
+         */
+        function createVerseCardHtml(item) {
+            const verseNumberMatch = item.id.match(/\d+/);
+            const displayVerseNumber = verseNumberMatch ? parseInt(verseNumberMatch[0]) : 0;
+            
+            const highlightedRef = highlightText(item.ref, currentSearchTerm);
+            let verseTextContent;
+
+            // 1. 암송 모드 우선 적용 (검색어 강조보다 우선)
+            if (item.isBlindMode) {
+                verseTextContent = createBlindText(item.text);
+            } else {
+                // 2. 암송 모드가 아니면 검색어 강조 적용
+                verseTextContent = highlightText(item.text, currentSearchTerm);
+            }
+
+            // 버튼 클래스 설정
+            const favActive = item.isFavorite ? 'active favorite' : 'hover:bg-yellow-100 hover:text-yellow-700';
+            const memActive = item.isMemorized ? 'active memorized' : 'hover:bg-green-100 hover:text-green-700';
+            const blindActive = item.isBlindMode ? 'active blind' : 'hover:bg-violet-100 hover:text-violet-700';
+            
+            // 암송 모드 시는 글씨가 더 굵게 보이도록 스타일 조정
+            const verseCardClass = item.isBlindMode ? 'font-medium' : ''; 
+
+            return `
+                <div class="verse-item" data-id="${item.id}">
+                    <div class="verse-card bg-white p-4 rounded-t-xl shadow-md border border-gray-100 transition duration-200">
+                        <p class="text-gray-800 text-sm sm:text-base leading-relaxed ${verseCardClass}">
+                            <strong class="text-blue-700 font-extrabold mr-2 whitespace-nowrap">${highlightedRef}</strong>${verseTextContent}
+                        </p>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-b-xl border-x border-b border-gray-200">
+                        <span class="text-xs sm:text-sm font-medium text-gray-500">${item.themeTitle} - ${displayVerseNumber}/100</span>
+                        
+                        <div class="flex space-x-2">
+                            <button class="action-button toggle-state-btn px-2 py-1 text-xs rounded-lg transition-all duration-150 active:scale-95 ${favActive}" data-id="${item.id}" data-state="favorites" title="즐겨찾기 토글">
+                                <i class="fas fa-star mr-1"></i> 즐겨찾기
+                            </button>
+                            <button class="action-button toggle-state-btn px-2 py-1 text-xs rounded-lg transition-all duration-150 active:scale-95 ${memActive}" data-id="${item.id}" data-state="memorized" title="암송 완료 토글">
+                                <i class="fas fa-check-circle mr-1"></i> 암송 완료
+                            </button>
+                            <button class="action-button toggle-blind-btn px-2 py-1 text-xs rounded-lg transition-all duration-150 active:scale-95 ${blindActive}" data-id="${item.id}" title="암송 모드 토글">
+                                <i class="fas fa-eye-slash mr-1"></i> 암송 모드
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * 렌더링된 구절 카드에 이벤트 리스너를 부착합니다.
+         */
+        function attachEventListenersToVerse(verseId) {
+            const verseItem = document.querySelector(`.verse-item[data-id="${verseId}"]`);
+            if (!verseItem) return;
+            
+            // 즐겨찾기/암송 완료 토글
+            verseItem.querySelectorAll('.toggle-state-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    const state = e.currentTarget.dataset.state;
+                    toggleState(id, state);
+                });
+            });
+
+            // 암송 모드 토글
+            verseItem.querySelector('.toggle-blind-btn').addEventListener('click', (e) => {
+                toggleBlindMode(e.currentTarget.dataset.id);
+            });
+        }
+
+
+        /**
+         * 현재 선택된 필터/검색어에 따라 구절 목록을 필터링하고 렌더링합니다.
          */
         function filterAndRenderVerses() {
-            let filteredVerses = [];
+            const { favorites, memorized, blindMode } = loadVerseStates();
+            let allVerses = [];
+
+            // 1. 전체 구절 목록 준비 (상태 포함)
+            allScriptures.forEach(section => {
+                section.verses.forEach(verse => {
+                    allVerses.push({
+                        ...verse,
+                        themeTitle: section.title,
+                        isFavorite: favorites.includes(verse.id),
+                        isMemorized: memorized.includes(verse.id),
+                        isBlindMode: blindMode.includes(verse.id) // 암송 모드 상태 추가
+                    });
+                });
+            });
+
+            // 2. 검색어 필터링 (가장 높은 우선순위)
+            let filteredVerses = allVerses;
             const searchLower = currentSearchTerm.toLowerCase();
-            
-            // 모든 구절을 담는 배열 생성 (검색을 위해)
-            const allVerses = allScriptures.flatMap(section => 
-                section.verses.map(verse => ({
-                    ...verse,
-                    themeTitle: section.title
-                }))
-            );
 
             if (currentSearchTerm) {
-                // 검색어가 있을 경우: 전체 구절에서 검색
                 filteredVerses = allVerses.filter(verse => 
                     verse.text.toLowerCase().includes(searchLower) || 
                     verse.ref.toLowerCase().includes(searchLower)
                 );
                 emptyMessageTextEl.textContent = `"${currentSearchTerm}"(이) 포함된 구절을 찾을 수 없습니다.`;
             } else {
-                // 검색어가 없을 경우: 주제별 필터링
-                let sectionsToRender = [];
-                if (currentTheme === '전체 보기') {
-                    sectionsToRender = allScriptures;
+                // 3. 통합 필터 적용
+                if (currentFilter === '즐겨찾기') {
+                    filteredVerses = filteredVerses.filter(verse => verse.isFavorite);
+                    emptyMessageTextEl.textContent = `즐겨찾기로 설정된 구절이 없습니다.`;
+                } else if (currentFilter === '암송 완료') {
+                    filteredVerses = filteredVerses.filter(verse => verse.isMemorized);
+                    emptyMessageTextEl.textContent = `암송 완료로 설정된 구절이 없습니다.`;
+                } else if (currentFilter !== '전체 보기') {
+                    // 소주제 필터링
+                    filteredVerses = filteredVerses.filter(verse => verse.themeTitle === currentFilter);
+                    emptyMessageTextEl.textContent = `선택하신 주제 (${currentFilter})에 해당하는 구절이 없습니다.`;
                 } else {
-                    const selectedSection = allScriptures.find(section => section.title === currentTheme);
-                    if (selectedSection) {
-                        sectionsToRender = [selectedSection];
-                    }
+                    emptyMessageTextEl.textContent = `현재 목록에 표시할 구절이 없습니다.`;
                 }
-                
-                filteredVerses = sectionsToRender.flatMap(section => 
-                    section.verses.map(verse => ({
-                        ...verse,
-                        themeTitle: section.title
-                    }))
-                );
-                emptyMessageTextEl.textContent = `선택하신 주제에 해당하는 구절이 없습니다.`;
             }
+            
+            // 4. 최종 렌더링
+            verseListEl.innerHTML = filteredVerses.map(createVerseCardHtml).join('');
 
-            let html = '';
-
-            filteredVerses.forEach(item => {
-                const verseNumberMatch = item.id.match(/\d+/);
-                const displayVerseNumber = verseNumberMatch ? parseInt(verseNumberMatch[0]) : 0;
-                
-                // 검색어가 있을 때만 강조 표시 적용
-                const highlightedRef = highlightText(item.ref, currentSearchTerm);
-                const highlightedText = highlightText(item.text, currentSearchTerm);
-
-                html += `
-                    <div class="verse-item mb-4">
-                        <!-- 1. Theme and Counter Header: [소주제] - [번호]/100 형식 -->
-                        <div class="text-xs sm:text-sm font-bold text-gray-700 mb-0.5 px-3 py-1 bg-emerald-100/50 rounded-t-xl">
-                            ${item.themeTitle} - ${displayVerseNumber}/100
-                        </div>
-                        
-                        <!-- 2. Verse Content Card: 장절과 본문 같은 줄에 표시 -->
-                        <div class="verse-card bg-white p-4 rounded-b-xl shadow-md border border-gray-100 transition duration-200">
-                            <p class="text-gray-800 text-sm sm:text-base leading-relaxed">
-                                <strong class="text-blue-700 font-extrabold mr-2 whitespace-nowrap">${highlightedRef}</strong>${highlightedText}
-                            </p>
-                        </div>
-                    </div>
-                `;
-            });
-
-            // 최종 렌더링 및 메시지 표시
-            verseListEl.innerHTML = html;
+            // 5. 새로 렌더링된 모든 구절에 이벤트 리스너 부착
+            filteredVerses.forEach(verse => attachEventListenersToVerse(verse.id));
+            
             if (filteredVerses.length === 0) {
                 noVersesMessageEl.classList.remove('hidden');
             } else {
@@ -406,10 +548,118 @@
             }
         }
 
+
+        // --- 초기화 로직 (필터 UI) ---
+
+        /**
+         * 통합 필터 버튼을 렌더링합니다. (로직은 이전과 동일하게 유지)
+         */
+        function renderUnifiedFilters() {
+            const themes = allScriptures.map(section => section.title);
+            
+            const specialFilters = [
+                { id: '전체 보기', icon: '<i class="fas fa-list-ul mr-1"></i>', type: 'all' },
+                { id: '즐겨찾기', icon: '<i class="fas fa-star mr-1"></i>', type: 'favorite' },
+                { id: '암송 완료', icon: '<i class="fas fa-check-circle mr-1"></i>', type: 'memorized' }
+            ];
+
+            const themeFilters = themes.map(theme => ({ id: theme, icon: '<i class="fas fa-tag mr-1"></i>', type: 'theme' }));
+
+            const allFilters = [...specialFilters, ...themeFilters];
+
+            unifiedFiltersEl.innerHTML = allFilters.map(filter => {
+                let baseClasses = 'bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600';
+                let activeClasses = 'bg-emerald-500 text-white';
+
+                if (filter.type === 'favorite') {
+                    baseClasses = 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200';
+                    activeClasses = 'bg-yellow-500 text-white';
+                } else if (filter.type === 'memorized') {
+                    baseClasses = 'bg-green-100 text-green-700 hover:bg-green-200';
+                    activeClasses = 'bg-green-500 text-white';
+                } else if (filter.type === 'all') {
+                    baseClasses = 'bg-blue-100 text-blue-700 hover:bg-blue-200';
+                    activeClasses = 'bg-blue-500 text-white';
+                }
+
+                const isActive = filter.id === currentFilter && !currentSearchTerm;
+                
+                return `
+                    <button
+                        class="filter-button px-3 py-1 text-xs sm:text-sm font-semibold rounded-full transition duration-150 ease-in-out whitespace-nowrap active:scale-95
+                                ${isActive ? activeClasses : baseClasses}
+                                ${currentSearchTerm ? 'opacity-50 cursor-default' : ''}
+                                focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                        data-filter="${filter.id}"
+                        data-type="${filter.type}"
+                        ${currentSearchTerm ? 'disabled' : ''}
+                    >
+                        ${filter.icon}${filter.id}
+                    </button>
+                `;
+            }).join('');
+
+            // 버튼에 클릭 이벤트 리스너를 추가합니다.
+            unifiedFiltersEl.querySelectorAll('.filter-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    if (currentSearchTerm) return; 
+                    
+                    const selectedFilter = e.currentTarget.dataset.filter;
+                    currentFilter = selectedFilter;
+                    updateFilterButtonStyles(selectedFilter);
+                    filterAndRenderVerses();
+                });
+            });
+        }
+
+        /**
+         * 통합 필터 버튼의 활성화/비활성화 스타일을 업데이트합니다. (로직은 이전과 동일하게 유지)
+         */
+        function updateFilterButtonStyles(activeFilter) {
+             unifiedFiltersEl.querySelectorAll('.filter-button').forEach(btn => {
+                let baseClasses = 'bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600';
+                let activeClasses = 'bg-emerald-500 text-white';
+
+                if (btn.dataset.type === 'favorite') {
+                    baseClasses = 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200';
+                    activeClasses = 'bg-yellow-500 text-white';
+                } else if (btn.dataset.type === 'memorized') {
+                    baseClasses = 'bg-green-100 text-green-700 hover:bg-green-200';
+                    activeClasses = 'bg-green-500 text-white';
+                } else if (btn.dataset.type === 'all') {
+                    baseClasses = 'bg-blue-100 text-blue-700 hover:bg-blue-200';
+                    activeClasses = 'bg-blue-500 text-white';
+                }
+
+                // 클래스 초기화
+                btn.className = 'filter-button px-3 py-1 text-xs sm:text-sm font-semibold rounded-full transition duration-150 ease-in-out whitespace-nowrap active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2';
+                
+                if (btn.dataset.filter === activeFilter && !currentSearchTerm) {
+                    btn.classList.add(...activeClasses.split(' '), 'active');
+                } else {
+                    btn.classList.add(...baseClasses.split(' '));
+                }
+
+                // 검색 중일 때 버튼 비활성화 시각화
+                if (currentSearchTerm) {
+                    btn.setAttribute('disabled', 'true');
+                    btn.classList.add('opacity-50', 'cursor-default');
+                    btn.classList.remove('active', ...activeClasses.split(' ')); 
+                    btn.classList.add(...baseClasses.split(' '));
+                } else {
+                    btn.removeAttribute('disabled');
+                    btn.classList.remove('opacity-50', 'cursor-default');
+                }
+            });
+        }
+
+
         // 초기화
         window.onload = function() {
-            renderThemeSelectors();
-            filterAndRenderVerses(); // 초기에는 '전체 보기'가 선택된 상태로 렌더링됨
+            currentFilter = '전체 보기'; 
+            renderUnifiedFilters();
+            updateFilterButtonStyles(currentFilter);
+            filterAndRenderVerses(); 
         };
     </script>
 </body>
